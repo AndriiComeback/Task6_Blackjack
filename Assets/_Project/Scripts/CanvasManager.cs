@@ -57,8 +57,8 @@ public class CanvasManager : MonoBehaviour
                 screenText.text = screenText.text.Substring(0, screenText.text.Length - 1);
             }
         } else if ((c == '\n') || (c == '\r')) {
-            if (!InputCommand()) {
-                // remove last line
+            if (InputCommand()) {
+                RemoveFirstLines(2);
             }
         } else {
             bool isAlphaBet = Regex.IsMatch(c.ToString(), "[a-z]", RegexOptions.IgnoreCase);
