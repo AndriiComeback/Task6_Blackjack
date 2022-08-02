@@ -153,6 +153,7 @@ public class BackJackController : MonoBehaviour
         return false;
     }
     void GenerateNewDeck() {
+        deck.Clear();
         for (int i = 0; i < 13; i++) {
             deck.Add(new Card { rank = (Rank)i, suit = Suit.Diamonds });
             deck.Add(new Card { rank = (Rank)i, suit = Suit.Hearts });
