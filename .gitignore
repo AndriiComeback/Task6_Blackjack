@@ -73,3 +73,5 @@ crashlytics-build.properties
 
 # TextMesh Pro files
 [Aa]ssets/TextMesh*Pro/
+Assets/Stats.txt
+Assets/Stats.txt.meta
