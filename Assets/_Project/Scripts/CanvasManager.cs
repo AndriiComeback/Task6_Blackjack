@@ -7,39 +7,20 @@ using System.Linq;
 
 public class CanvasManager : MonoBehaviour
 {
-    [SerializeField] TMP_Text screenText;
-    [SerializeField] BackJackController backJackController;
-    [SerializeField] int maxScreenLines = 16;
-    List<string> queue = new List<string>();
-    bool isTyping = false;
+    [SerializeField] private TMP_Text screenText;
+    [SerializeField] private BackJackController backJackController;
+    [SerializeField] private int maxScreenLines = 16;
+
+    private List<string> queue = new List<string>();
+    private bool isTyping = false;
+
+    #region Methods: public
+
     public void Print(string text, bool isNewLineNeeded = false) {
         if (!isTyping) {
             StartCoroutine(PrintByLetter($"{text}", isNewLineNeeded));
         } else {
             queue.Add(text);
-        }
-    }
-    IEnumerator PrintByLetter(string text, bool isNewLineNeeded = false) {
-        var linesCount = screenText.text.Split('\n').Length;
-        if (linesCount > maxScreenLines) {
-            RemoveFirstLines(linesCount - maxScreenLines);
-        }
-
-        isTyping = true;
-        if (isNewLineNeeded) {
-            screenText.text += "\n\n";
-        }
-        screenText.text += "> ";
-        foreach (char c in text){
-            screenText.text += c;
-            yield return new WaitForSeconds(0.03f);
-        }
-        screenText.text += "\n\n";
-        isTyping = false;
-        if (queue != null && queue.Count > 0) {
-            var txt = queue[0];
-            queue.RemoveAt(0);
-            StartCoroutine(PrintByLetter(txt));
         }
     }
 
@@ -67,23 +48,7 @@ public class CanvasManager : MonoBehaviour
             }
         }
     }
-    void RemoveFirstLines(int n) {
-        var lines = screenText.text.Split('\n');
-        if (lines.Length <= n) {
-            return;
-        }
-        var newLines = new List<string>();
-        for (int i = n; i < lines.Length; i++) {
-            newLines.Add(lines[i]);
-        }
-        screenText.text = string.Join("\n", newLines);
-    }
-    bool InputCommand() {
-        var lastLine = screenText.text.Split('\n').Last();
-        lastLine = lastLine.Replace("> ", "");
 
-        return backJackController.RecognizeCommand(lastLine);
-    }
     public void ShowHand(List<Card> cards, bool isPlayerHand = true, bool isDealerHandClosed = false) {
         var linesCount = screenText.text.Split('\n').Length;
         if (linesCount > maxScreenLines) {
@@ -105,7 +70,55 @@ public class CanvasManager : MonoBehaviour
         }
         Print(result, true);
     }
-    string GetRankShortName(Rank rank) {
+
+    #endregion
+
+    #region Methods: private
+
+    private IEnumerator PrintByLetter(string text, bool isNewLineNeeded = false) {
+        var linesCount = screenText.text.Split('\n').Length;
+        if (linesCount > maxScreenLines) {
+            RemoveFirstLines(linesCount - maxScreenLines);
+        }
+
+        isTyping = true;
+        if (isNewLineNeeded) {
+            screenText.text += "\n\n";
+        }
+        screenText.text += "> ";
+        foreach (char c in text) {
+            screenText.text += c;
+            yield return new WaitForSeconds(0.03f);
+        }
+        screenText.text += "\n\n";
+        isTyping = false;
+        if (queue != null && queue.Count > 0) {
+            var txt = queue[0];
+            queue.RemoveAt(0);
+            StartCoroutine(PrintByLetter(txt));
+        }
+    }
+
+    private void RemoveFirstLines(int n) {
+        var lines = screenText.text.Split('\n');
+        if (lines.Length <= n) {
+            return;
+        }
+        var newLines = new List<string>();
+        for (int i = n; i < lines.Length; i++) {
+            newLines.Add(lines[i]);
+        }
+        screenText.text = string.Join("\n", newLines);
+    }
+
+    private bool InputCommand() {
+        var lastLine = screenText.text.Split('\n').Last();
+        lastLine = lastLine.Replace("> ", "");
+
+        return backJackController.RecognizeCommand(lastLine);
+    }
+
+    private string GetRankShortName(Rank rank) {
         switch (rank) {
             case Rank.Ace:
                 return "A";
@@ -137,7 +150,8 @@ public class CanvasManager : MonoBehaviour
                 return "0";
         }
     }
-    char GetSuitImage(Suit suit) {
+
+    private char GetSuitImage(Suit suit) {
         switch (suit) {
             case Suit.Diamonds:
                 return '\u2666';
@@ -151,4 +165,7 @@ public class CanvasManager : MonoBehaviour
                 return 'x';
         }
     }
+
+    #endregion
+
 }

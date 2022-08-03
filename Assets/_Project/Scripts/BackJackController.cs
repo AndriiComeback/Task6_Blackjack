@@ -5,12 +5,22 @@ using UnityEngine;
 public class BackJackController : MonoBehaviour
 {
     [SerializeField] CanvasManager canvasManager;
-    List<Card> deck = new List<Card>();
-    List<Card> playerHand = new List<Card>();
-    List<Card> dealerHand = new List<Card>();
-    GameStates gameState;
+
+    [HideInInspector] public int wins;
+    [HideInInspector] public int loses;
+    [HideInInspector] public int ties;
+    [HideInInspector] public int blackjacks;
+    [HideInInspector] public int dealersBlackjacks;
+
+    private List<Card> deck = new List<Card>();
+    private List<Card> playerHand = new List<Card>();
+    private List<Card> dealerHand = new List<Card>();
+    private GameState gameState;
+
+    #region Methods: public
+
     public void StartNewGame() {
-        gameState = GameStates.NoGame;
+        gameState = GameState.NoGame;
         playerHand.Clear();
         dealerHand.Clear();
         GenerateNewDeck();
@@ -27,13 +37,18 @@ public class BackJackController : MonoBehaviour
                 canvasManager.ShowHand(dealerHand, false);
                 canvasManager.Print("Tie!");
                 canvasManager.Print("Type Deal for new game.");
-                gameState = GameStates.Tie;
+                gameState = GameState.Tie;
+                ties++;
+                blackjacks++;
+                dealersBlackjacks++;
             } else {
                 canvasManager.Print("You've got a blackjack!");
                 canvasManager.ShowHand(dealerHand, false);
                 canvasManager.Print("You've won!");
                 canvasManager.Print("Type Deal for new game.");
-                gameState = GameStates.Won;
+                gameState = GameState.Won;
+                wins++;
+                blackjacks++;
             }
         } else {
             if (dealerInitResult == SumResult.Blackjack) {
@@ -41,95 +56,35 @@ public class BackJackController : MonoBehaviour
                 canvasManager.ShowHand(dealerHand, false);
                 canvasManager.Print("You've lost!");
                 canvasManager.Print("Type Deal for new game.");
-                gameState = GameStates.Lost;
+                gameState = GameState.Lost;
+                loses++;
+                dealersBlackjacks++;
             } else {
-                gameState = GameStates.PlayerTurn;
+                gameState = GameState.PlayerTurn;
             }
         }
     }
-    public void Hit() {
-        if (gameState != GameStates.PlayerTurn) {
-            return;
-        }
-        gameState = GameStates.PassingTurn;
-        GiveCardToPlayer(playerHand);
-        var result = CountHand(playerHand, out _);
-        canvasManager.ShowHand(playerHand);
-        if (result == SumResult.Blackjack) {
-            gameState = GameStates.EnemyTurn;
-            canvasManager.Print("You've got a blackjack!");
+
+    public void LoadGame() {
+        SaveData data = SaveSystem.LoadData();
+        playerHand = data.playerHand;
+        dealerHand = data.dealerHand;
+        deck = data.deck;
+        gameState = data.gameState;
+
+        if (gameState == GameState.PlayerTurn) {
+            canvasManager.ShowHand(playerHand);
+            canvasManager.ShowHand(dealerHand, false, true);
+            canvasManager.Print("Your turn.", true);
+        } else if (gameState == GameState.EnemyTurn) {
+            canvasManager.ShowHand(playerHand);
+            canvasManager.ShowHand(dealerHand, false);
             DealerTurn();
-        } else if (result == SumResult.Bust) {
-            gameState = GameStates.Lost;
-            canvasManager.Print("You're busted! You've lost.");
-            canvasManager.Print("Type Deal for new game.");
         } else {
-            gameState = GameStates.PlayerTurn;
+            canvasManager.Print("Type Deal for new game.", true);
         }
     }
-    void DealerTurn() {
-        canvasManager.ShowHand(dealerHand, false);
-        canvasManager.Print("Dealer takes his turn.", true);
-        for (int i = 0; i < 100; i++) {
-            var dealerResult = CountHand(dealerHand, out int dealerSum);
-            var playerResult = CountHand(playerHand, out int playerSum);
-            if (dealerSum < 17 || dealerSum < playerSum) {
-                GiveCardToPlayer(dealerHand);
-                canvasManager.Print("Dealer takes a card.");
-                canvasManager.ShowHand(dealerHand, false);
-                dealerResult = CountHand(dealerHand, out dealerSum);
-                if (dealerResult == SumResult.Blackjack) {
-                    if (playerResult != SumResult.Blackjack) {
-                        gameState = GameStates.Lost;
-                        canvasManager.Print("Dealer has got a blackjack! You've lost!");
-                        canvasManager.Print("Type Deal for new game.");
-                        break;
-                    } else {
-                        gameState = GameStates.Tie;
-                        canvasManager.Print("Dealer has got a blackjack! Tie!");
-                        canvasManager.Print("Type Deal for new game.");
-                        break;
-                    }
-                } else if (dealerResult == SumResult.Bust) {
-                    if (playerResult != SumResult.Bust) {
-                        gameState = GameStates.Won;
-                        canvasManager.Print("Dealer is busted! You win!");
-                        canvasManager.Print("Type Deal for new game.");
-                        break;
-                    } else {
-                        gameState = GameStates.Tie;
-                        canvasManager.Print("Dealer is busted! Tie!");
-                        canvasManager.Print("Type Deal for new game.");
-                        break;
-                    }
-                }
-            } else {
-                if (dealerSum > playerSum) {
-                    gameState = GameStates.Lost;
-                    canvasManager.Print($"Dealers has {dealerSum}. You have {playerSum}. You've lost!");
-                    canvasManager.Print("Type Deal for new game.");
-                    break;
-                } else if (dealerSum == playerSum) {
-                    gameState = GameStates.Tie;
-                    canvasManager.Print($"Dealer has {dealerSum}! You have {playerSum}. Tie!");
-                    canvasManager.Print("Type Deal for new game.");
-                    break;
-                } else {
-                    gameState = GameStates.Won;
-                    canvasManager.Print($"Dealer has {dealerSum}! You have {playerSum}. You've won!");
-                    canvasManager.Print("Type Deal for new game.");
-                    break;
-                }
-            }
-        }
-    }
-    public void Stand() {
-        if (gameState != GameStates.PlayerTurn) {
-            return;
-        }
-        gameState = GameStates.EnemyTurn;
-        DealerTurn();
-    }
+
     public bool RecognizeCommand(string command) {
         if (Equals(command.ToLower(), "deal")) {
             StartNewGame();
@@ -143,15 +98,146 @@ public class BackJackController : MonoBehaviour
             Stand();
             return true;
         }
+        if (Equals(command.ToLower(), "stats")) {
+            Stats();
+            return true;
+        }
         if (Equals(command.ToLower(), "help")) {
             canvasManager.Print("Commands:", true);
             canvasManager.Print("Deal - new game.");
             canvasManager.Print("Hit - take a card.");
             canvasManager.Print("Stand - hold the cards.");
             canvasManager.Print("Help - see help.");
+            canvasManager.Print("Stats - see stats.");
         }
         return false;
     }
+
+    public void Hit() {
+        if (gameState != GameState.PlayerTurn) {
+            return;
+        }
+        gameState = GameState.PassingTurn;
+        GiveCardToPlayer(playerHand);
+        var result = CountHand(playerHand, out _);
+        canvasManager.ShowHand(playerHand);
+        if (result == SumResult.Blackjack) {
+            gameState = GameState.EnemyTurn;
+            canvasManager.Print("You've got a blackjack!");
+            blackjacks++;
+            DealerTurn();
+        } else if (result == SumResult.Bust) {
+            gameState = GameState.Lost;
+            canvasManager.Print("You're busted! You've lost.");
+            canvasManager.Print("Type Deal for new game.");
+            loses++;
+        } else {
+            gameState = GameState.PlayerTurn;
+        }
+    }
+
+    void DealerTurn() {
+        canvasManager.ShowHand(dealerHand, false);
+        canvasManager.Print("Dealer takes his turn.", true);
+        for (int i = 0; i < 100; i++) {
+            var dealerResult = CountHand(dealerHand, out int dealerSum);
+            var playerResult = CountHand(playerHand, out int playerSum);
+            if (dealerSum < 17 || dealerSum < playerSum) {
+                GiveCardToPlayer(dealerHand);
+                canvasManager.Print("Dealer takes a card.");
+                canvasManager.ShowHand(dealerHand, false);
+                dealerResult = CountHand(dealerHand, out dealerSum);
+                if (dealerResult == SumResult.Blackjack) {
+                    if (playerResult != SumResult.Blackjack) {
+                        gameState = GameState.Lost;
+                        canvasManager.Print("Dealer has got a blackjack! You've lost!");
+                        canvasManager.Print("Type Deal for new game.");
+                        dealersBlackjacks++;
+                        loses++;
+                        break;
+                    } else {
+                        gameState = GameState.Tie;
+                        canvasManager.Print("Dealer has got a blackjack! Tie!");
+                        canvasManager.Print("Type Deal for new game.");
+                        dealersBlackjacks++;
+                        ties++;
+                        break;
+                    }
+                } else if (dealerResult == SumResult.Bust) {
+                    if (playerResult != SumResult.Bust) {
+                        gameState = GameState.Won;
+                        canvasManager.Print("Dealer is busted! You win!");
+                        canvasManager.Print("Type Deal for new game.");
+                        wins++;
+                        break;
+                    } else {
+                        gameState = GameState.Tie;
+                        canvasManager.Print("Dealer is busted! Tie!");
+                        canvasManager.Print("Type Deal for new game.");
+                        ties++;
+                        break;
+                    }
+                }
+            } else {
+                if (dealerSum > playerSum) {
+                    gameState = GameState.Lost;
+                    canvasManager.Print($"Dealers has {dealerSum}. You have {playerSum}. You've lost!");
+                    canvasManager.Print("Type Deal for new game.");
+                    loses++;
+                    break;
+                } else if (dealerSum == playerSum) {
+                    gameState = GameState.Tie;
+                    canvasManager.Print($"Dealer has {dealerSum}! You have {playerSum}. Tie!");
+                    canvasManager.Print("Type Deal for new game.");
+                    ties++;
+                    break;
+                } else {
+                    gameState = GameState.Won;
+                    canvasManager.Print($"Dealer has {dealerSum}! You have {playerSum}. You've won!");
+                    canvasManager.Print("Type Deal for new game.");
+                    wins++;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void Stand() {
+        if (gameState != GameState.PlayerTurn) {
+            return;
+        }
+        gameState = GameState.EnemyTurn;
+        DealerTurn();
+    }
+
+    public void Stats() {
+        canvasManager.Print($"Wins: {wins}, loses: {loses}, ties: {ties}.", true);
+        canvasManager.Print($"Blackjacks: {blackjacks}, dealer's bjs: {dealersBlackjacks}.");
+        if (gameState == GameState.PlayerTurn) {
+            canvasManager.ShowHand(playerHand);
+            canvasManager.ShowHand(dealerHand, false, true);
+        }
+    }
+
+    public void SaveData() {
+        SaveSystem.SaveGame(playerHand, dealerHand, deck, gameState);
+    }
+
+    #endregion
+
+    #region Methods: private
+
+    private void Start() {
+        List<int> results = FileSaveHelper.ReadStatsFromTextFile();
+        if (results.Count == 5) {
+            wins = results[0];
+            loses = results[1];
+            ties = results[2];
+            blackjacks = results[3];
+            dealersBlackjacks = results[4];
+        }
+    }
+
     void GenerateNewDeck() {
         deck.Clear();
         for (int i = 0; i < 13; i++) {
@@ -162,12 +248,14 @@ public class BackJackController : MonoBehaviour
         }
         deck.Shuffle();
     }
+
     void GiveCardToPlayer(List<Card> hand, int amount = 1) {
         for (int i = 0; i < amount; i++) {
             hand.Add(deck[0]);
             deck.RemoveAt(0);
         }
     }
+
     SumResult CountHand(List<Card> hand, out int sum) {
         int aceCount = 0;
         sum = 0;
@@ -204,6 +292,7 @@ public class BackJackController : MonoBehaviour
             return SumResult.Bust;
         }
     }
+
     int RankToValue(Rank rank, bool doestTakeMaxValue = false) {
         switch (rank) {
             case Rank.Ace:
@@ -236,28 +325,9 @@ public class BackJackController : MonoBehaviour
                 return 0;
         }
     }
+
+    #endregion
 }
 
-public enum GameStates { NoGame, PlayerTurn, PassingTurn, EnemyTurn, Won, Lost, Tie }
+public enum GameState { NoGame, PlayerTurn, PassingTurn, EnemyTurn, Won, Lost, Tie }
 public enum SumResult { Default, Bust, Blackjack }
-
-public class Card {
-    public Rank rank;
-    public Suit suit;
-}
-
-public enum Suit { Diamonds, Hearts, Clubs, Spades }
-public enum Rank { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Quenn, King }
-
-public static class ListHelper {
-    public static void Shuffle<T>(this IList<T> list) {
-        int n = list.Count;
-        while (n > 1) {
-            n--;
-            int k = Random.Range(0, n + 1);
-            T value = list[k];
-            list[k] = list[n];
-            list[n] = value;
-        }
-    }
-}
