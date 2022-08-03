@@ -1359,7 +1359,6 @@ GameObject:
   - component: {fileID: 1399445524}
   - component: {fileID: 1399445526}
   - component: {fileID: 1399445527}
-  - component: {fileID: 1399445528}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -1410,7 +1409,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasManager: {fileID: 1399445524}
-  fileSaveHelper: {fileID: 1399445528}
   backJackController: {fileID: 1399445527}
 --- !u!114 &1399445527
 MonoBehaviour:
@@ -1425,24 +1423,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvasManager: {fileID: 1399445524}
-  fileSaveHelper: {fileID: 1399445528}
   wins: 0
   loses: 0
   ties: 0
   blackjacks: 0
   dealersBlackjacks: 0
---- !u!114 &1399445528
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1399445522}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b51cfe03a223bcd46813e25390cfd927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1764214107
 GameObject:
   m_ObjectHideFlags: 0
