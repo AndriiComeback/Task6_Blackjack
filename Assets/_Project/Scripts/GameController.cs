@@ -19,6 +19,7 @@ public class GameController : MonoBehaviour
             canvasManager.Print("Note: you can type Deal at any moment for the new game.");
             canvasManager.Print("Type Help to see available commands.");
         }
+        canvasManager.Print("Note: input works only in english");
     }
 
     private void Update() {
@@ -33,7 +34,7 @@ public class GameController : MonoBehaviour
 
             backJackController.SaveData();
 
-            Application.Quit();
+            UnityEngine.Application.Quit();
         }
     }
 }

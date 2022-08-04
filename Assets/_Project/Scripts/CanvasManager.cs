@@ -42,7 +42,7 @@ public class CanvasManager : MonoBehaviour
                 RemoveFirstLines(2);
             }
         } else {
-            bool isAlphaBet = Regex.IsMatch(c.ToString(), "[a-z]", RegexOptions.IgnoreCase);
+            bool isAlphaBet = Regex.IsMatch(c.ToString(), "[a-z,A-Z]", RegexOptions.IgnoreCase);
             if (isAlphaBet) {
                 screenText.text += c;
             }
